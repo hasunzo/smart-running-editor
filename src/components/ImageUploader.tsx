@@ -89,7 +89,7 @@ export function ImageUploader({ title, description, onImageUpload, uploadedImage
             </div>
           ) : (
             <div 
-              className={`border-2 border-border rounded-lg p-8 text-center transition-all duration-200 cursor-pointer ${
+              className={`border-2 border-border rounded-lg p-12 text-center transition-all duration-200 cursor-pointer ${
                 isDragging 
                   ? 'border-primary bg-primary/5 scale-105' 
                   : 'border-border hover:border-primary hover:bg-primary/5'
