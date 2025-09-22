@@ -4,7 +4,7 @@ import { ColorSelector } from './ColorSelector';
 import { ImageEditor } from './ImageEditor';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Wand2, CheckCircle } from 'lucide-react';
+import { Zap, CheckCircle, AlertCircle } from 'lucide-react';
 
 type Step = 'upload' | 'editing' | 'completed';
 
@@ -125,7 +125,7 @@ export function RunningImageComposer() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-white p-4">
       <div className="max-w-md mx-auto space-y-6">
         {/* 헤더 */}
         <div className="text-center space-y-2">
@@ -138,7 +138,8 @@ export function RunningImageComposer() {
         {/* 상태 메시지 (상단 고정, 짧은 표시) */}
         {statusMessage && (
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-            <div className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+            <div className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
               {statusMessage}
             </div>
           </div>
@@ -174,7 +175,7 @@ export function RunningImageComposer() {
               onClick={generateImage}
               disabled={!backgroundImage || !runningRecordImage}
             >
-              <Wand2 className="w-5 h-5 mr-2" />
+              <Zap className="w-5 h-5 mr-2" />
               이미지 생성하기
             </Button>
           </div>

@@ -43,18 +43,18 @@ export function ImageUploader({ title, description, onImageUpload, uploadedImage
 
   const getIcon = () => {
     if (title.includes('배경')) {
-      return '🌄';
+      return <ImageIcon className="w-5 h-5" />;
     } else if (title.includes('기록')) {
-      return '📱';
+      return <ImageIcon className="w-5 h-5" />;
     }
-    return '📷';
+    return <ImageIcon className="w-5 h-5" />;
   };
 
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
-          <span className="text-xl">{getIcon()}</span>
+          {getIcon()}
           {title}
         </CardTitle>
       </CardHeader>
@@ -89,7 +89,7 @@ export function ImageUploader({ title, description, onImageUpload, uploadedImage
             </div>
           ) : (
             <div 
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 cursor-pointer ${
+              className={`border-2 border-border rounded-lg p-8 text-center transition-all duration-200 cursor-pointer ${
                 isDragging 
                   ? 'border-primary bg-primary/5 scale-105' 
                   : 'border-border hover:border-primary hover:bg-primary/5'
@@ -105,10 +105,7 @@ export function ImageUploader({ title, description, onImageUpload, uploadedImage
                 }`} />
                 <div className="text-center">
                   <p className="text-sm font-medium text-foreground">
-                    {isDragging ? '파일을 놓아주세요' : '클릭하여 이미지 업로드'}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    또는 드래그 앤 드롭
+                    클릭하여 이미지 업로드
                   </p>
                 </div>
               </div>
