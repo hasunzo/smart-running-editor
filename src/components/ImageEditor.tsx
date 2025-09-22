@@ -277,8 +277,8 @@ export function ImageEditor({ backgroundImage, runningRecordImage, textColor, on
       fabricCanvasRef.current.add(fabricBgImg);
       
       // 러닝 기록 이미지 추가
-      const maxStatsWidth = canvasWidth * 0.3;
-      const scale = Math.min(maxStatsWidth / (processedStats as any).width, 1);
+      const maxStatsWidth = canvasWidth * 0.25;
+      const scale = Math.min(maxStatsWidth / (processedStats as any).width, 0.8);
       
       (processedStats as any).set({
         left: canvasWidth * 0.05,
@@ -334,12 +334,50 @@ export function ImageEditor({ backgroundImage, runningRecordImage, textColor, on
     downloadCanvas.width = originalWidth;
     downloadCanvas.height = originalHeight;
     
-    // 스케일 계산 (현재 캔버스 → 원본 크기)
-    const scaleX = originalWidth / fabricCanvasRef.current.width;
-    const scaleY = originalHeight / fabricCanvasRef.current.height;
+    // 먼저 원본 배경 이미지를 그리기
+    downloadCtx.drawImage(backgroundImg, 0, 0, originalWidth, originalHeight);
     
-    downloadCtx.scale(scaleX, scaleY);
-    downloadCtx.drawImage(fabricCanvasRef.current.lowerCanvasEl, 0, 0);
+    // 러닝 기록 이미지가 있으면 합성
+    if (processedStatsImage) {
+      // 현재 캔버스에서의 러닝 기록 위치와 크기 가져오기
+      const statsLeft = processedStatsImage.left;
+      const statsTop = processedStatsImage.top;
+      const statsScaleX = processedStatsImage.scaleX;
+      const statsScaleY = processedStatsImage.scaleY;
+      const statsWidth = processedStatsImage.width * statsScaleX;
+      const statsHeight = processedStatsImage.height * statsScaleY;
+      
+      // 현재 캔버스 크기 대비 원본 크기 비율 계산
+      const canvasToOriginalScaleX = originalWidth / fabricCanvasRef.current.width;
+      const canvasToOriginalScaleY = originalHeight / fabricCanvasRef.current.height;
+      
+      // 원본 크기 기준으로 위치와 크기 계산
+      const finalLeft = statsLeft * canvasToOriginalScaleX;
+      const finalTop = statsTop * canvasToOriginalScaleY;
+      const finalWidth = statsWidth * canvasToOriginalScaleX;
+      const finalHeight = statsHeight * canvasToOriginalScaleY;
+      
+      // 러닝 기록 이미지를 임시 캔버스에 그리기
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d')!;
+      tempCanvas.width = processedStatsImage.width;
+      tempCanvas.height = processedStatsImage.height;
+      
+      // processedStatsImage의 실제 이미지 데이터 가져오기
+      const imgElement = processedStatsImage.getElement();
+      tempCtx.drawImage(imgElement, 0, 0);
+      
+      // 그림자 효과 적용
+      downloadCtx.save();
+      downloadCtx.shadowColor = 'rgba(0,0,0,0.3)';
+      downloadCtx.shadowBlur = 15 * (originalWidth / 300); // 원본 크기에 맞게 조정
+      downloadCtx.shadowOffsetX = 5 * (originalWidth / 300);
+      downloadCtx.shadowOffsetY = 5 * (originalHeight / 450);
+      
+      // 최종 합성
+      downloadCtx.drawImage(tempCanvas, finalLeft, finalTop, finalWidth, finalHeight);
+      downloadCtx.restore();
+    }
     
     const dataUrl = downloadCanvas.toDataURL('image/png', 1.0);
     onSave(dataUrl);
