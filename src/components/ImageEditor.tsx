@@ -54,7 +54,7 @@ export function ImageEditor({ backgroundImage, runningRecordImage, textColor, on
     let minX = width, maxX = 0, minY = height, maxY = 0;
     let textPixels: Array<{x: number, y: number}> = [];
     
-    // 텍스트/숫자 픽셀 감지 (brightness < 120)
+    // 텍스트/숫자 픽셀 감지 (비교적 어두운 픽셀 + 색상 대비 고려)
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const idx = (y * width + x) * 4;
@@ -63,7 +63,8 @@ export function ImageEditor({ backgroundImage, runningRecordImage, textColor, on
         const b = data[idx + 2];
         const brightness = (r + g + b) / 3;
         
-        if (brightness < 120) {
+        // 더 넓은 범위의 텍스트 감지 (어두운 그리 + 색상 있는 텍스트)
+        if (brightness < 160 || (Math.abs(r-g) > 30 || Math.abs(g-b) > 30 || Math.abs(r-b) > 30)) {
           textPixels.push({x, y});
           minX = Math.min(minX, x);
           maxX = Math.max(maxX, x);
@@ -73,21 +74,25 @@ export function ImageEditor({ backgroundImage, runningRecordImage, textColor, on
       }
     }
     
-    // 상단 40% 영역의 큰 숫자들 우선 포함
+    // 상단 40%와 하단 30% 영역의 텍스트를 모두 우선 포함
     const topRegion = height * 0.4;
-    const importantPixels = textPixels.filter(p => p.y < topRegion);
+    const bottomRegion = height * 0.7;
+    const importantPixels = textPixels.filter(p => p.y < topRegion || p.y > bottomRegion);
     
     if (importantPixels.length > 0) {
       const impMinY = Math.min(...importantPixels.map(p => p.y));
+      const impMaxY = Math.max(...importantPixels.map(p => p.y));
       minY = Math.min(minY, impMinY);
+      maxY = Math.max(maxY, impMaxY);
     }
     
-    // 적절한 여백 추가 (10% 마진)
-    const margin = Math.min(width, height) * 0.1;
-    minX = Math.max(0, minX - margin);
-    maxX = Math.min(width, maxX + margin);
-    minY = Math.max(0, minY - margin);
-    maxY = Math.min(height, maxY + margin);
+    // 적절한 여백 추가 (상하좌우 다른 마진)
+    const horizontalMargin = Math.min(width, height) * 0.1;
+    const verticalMargin = Math.min(width, height) * 0.15; // 세로 마진 증가
+    minX = Math.max(0, minX - horizontalMargin);
+    maxX = Math.min(width, maxX + horizontalMargin);
+    minY = Math.max(0, minY - verticalMargin);
+    maxY = Math.min(height, maxY + verticalMargin * 1.5); // 하단 마진 더 크게
     
     return {
       x: minX,
