@@ -5,7 +5,6 @@ import { ImageEditor } from './ImageEditor';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Wand2, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
 
 type Step = 'upload' | 'editing' | 'completed';
 
@@ -15,6 +14,7 @@ export function RunningImageComposer() {
   const [runningRecordImage, setRunningRecordImage] = useState<string>('');
   const [textColor, setTextColor] = useState<'white' | 'black'>('white');
   const [savedImageUrl, setSavedImageUrl] = useState<string>('');
+  const [statusMessage, setStatusMessage] = useState<string>('');
 
   // Fabric.js 로드
   useEffect(() => {
@@ -28,11 +28,17 @@ export function RunningImageComposer() {
     };
   }, []);
 
+  // 간단한 상태 메시지 표시 (토스트 대신)
+  const showStatus = (message: string, type: 'success' | 'error' = 'success') => {
+    setStatusMessage(message);
+    setTimeout(() => setStatusMessage(''), 1500); // 1.5초 후 자동 제거
+  };
+
   const handleBackgroundUpload = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       setBackgroundImage(e.target?.result as string);
-      toast.success('배경 이미지가 업로드되었습니다! ✅');
+      // 토스트 대신 간단한 시각적 피드백만
     };
     reader.readAsDataURL(file);
   };
@@ -41,18 +47,17 @@ export function RunningImageComposer() {
     const reader = new FileReader();
     reader.onload = (e) => {
       setRunningRecordImage(e.target?.result as string);
-      toast.success('러닝 기록 스크린샷이 업로드되었습니다! ✅');
+      // 토스트 대신 간단한 시각적 피드백만
     };
     reader.readAsDataURL(file);
   };
 
   const generateImage = () => {
     if (!backgroundImage || !runningRecordImage) {
-      toast.error('배경 이미지와 러닝 기록 스크린샷을 모두 업로드해주세요.');
+      showStatus('이미지를 모두 업로드해주세요', 'error');
       return;
     }
     
-    toast.success('이미지 처리를 시작합니다! 🎨');
     setStep('editing');
   };
 
@@ -68,8 +73,6 @@ export function RunningImageComposer() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    toast.success('이미지가 저장되었습니다! 📁');
   };
 
   const startOver = () => {
@@ -92,7 +95,6 @@ export function RunningImageComposer() {
         {steps.map((stepItem, index) => {
           const isActive = step === stepItem.id;
           const isCompleted = steps.findIndex(s => s.id === step) > index;
-          const isNext = steps.findIndex(s => s.id === step) === index - 1;
 
           return (
             <React.Fragment key={stepItem.id}>
@@ -132,6 +134,15 @@ export function RunningImageComposer() {
             배경사진과 러닝기록을 자연스럽게 합성해보세요
           </p>
         </div>
+
+        {/* 상태 메시지 (상단 고정, 짧은 표시) */}
+        {statusMessage && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+              {statusMessage}
+            </div>
+          </div>
+        )}
 
         {/* 단계 표시 */}
         {renderStepIndicator()}
