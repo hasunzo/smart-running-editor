@@ -15,6 +15,7 @@ export function ImageEditor({ backgroundImage, runningRecordImage, textColor, on
   const fabricCanvasRef = useRef<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedStatsImage, setProcessedStatsImage] = useState<any>(null);
+  const [backgroundImg, setBackgroundImg] = useState<HTMLImageElement | null>(null);
 
   useEffect(() => {
     initializeFabricCanvas();
@@ -225,19 +226,29 @@ export function ImageEditor({ backgroundImage, runningRecordImage, textColor, on
     try {
       // 배경 이미지 로드
       const bgImg = await loadImage(backgroundImage);
+      setBackgroundImg(bgImg);
       
       // 러닝 기록 이미지 처리
       const statsImg = await loadImage(runningRecordImage);
       const processedStats = await processStatsImage(statsImg);
       
-      // 캔버스 크기를 배경 이미지에 맞게 조정
-      const aspectRatio = bgImg.width / bgImg.height;
-      let canvasWidth = 300;
-      let canvasHeight = 300 / aspectRatio;
+      // 캔버스 크기를 배경 이미지 비율에 맞게 설정 (전체 이미지가 보이도록)
+      const maxWidth = 300;
+      const maxHeight = 450;
       
-      if (canvasHeight > 450) {
-        canvasHeight = 450;
-        canvasWidth = 450 * aspectRatio;
+      const bgAspectRatio = bgImg.width / bgImg.height;
+      const containerAspectRatio = maxWidth / maxHeight;
+      
+      let canvasWidth, canvasHeight;
+      
+      if (bgAspectRatio > containerAspectRatio) {
+        // 배경이 더 넓은 경우
+        canvasWidth = maxWidth;
+        canvasHeight = maxWidth / bgAspectRatio;
+      } else {
+        // 배경이 더 높은 경우
+        canvasHeight = maxHeight;
+        canvasWidth = maxHeight * bgAspectRatio;
       }
       
       fabricCanvasRef.current.setDimensions({
@@ -248,7 +259,7 @@ export function ImageEditor({ backgroundImage, runningRecordImage, textColor, on
       // 기존 객체 제거
       fabricCanvasRef.current.clear();
       
-      // 배경 이미지 추가
+      // 배경 이미지 추가 (전체가 보이도록)
       const { fabric } = window as any;
       const fabricBgImg = await new Promise((resolve) => {
         fabric.Image.fromURL(backgroundImage, (img: any) => {
@@ -266,7 +277,7 @@ export function ImageEditor({ backgroundImage, runningRecordImage, textColor, on
       fabricCanvasRef.current.add(fabricBgImg);
       
       // 러닝 기록 이미지 추가
-      const maxStatsWidth = canvasWidth * 0.4;
+      const maxStatsWidth = canvasWidth * 0.3;
       const scale = Math.min(maxStatsWidth / (processedStats as any).width, 1);
       
       (processedStats as any).set({
@@ -306,22 +317,28 @@ export function ImageEditor({ backgroundImage, runningRecordImage, textColor, on
   };
 
   const saveImage = () => {
-    if (!fabricCanvasRef.current) return;
+    if (!fabricCanvasRef.current || !backgroundImg) return;
     
     // 선택 상태 해제
     fabricCanvasRef.current.discardActiveObject();
     fabricCanvasRef.current.renderAll();
     
-    // 고품질 다운로드를 위한 임시 캔버스
+    // 원본 배경 이미지 크기로 고품질 저장
+    const originalWidth = backgroundImg.width;
+    const originalHeight = backgroundImg.height;
+    
+    // 고품질 다운로드를 위한 임시 캔버스 (원본 크기)
     const downloadCanvas = document.createElement('canvas');
     const downloadCtx = downloadCanvas.getContext('2d')!;
     
-    // 원본 해상도로 확대
-    const scale = 2;
-    downloadCanvas.width = fabricCanvasRef.current.width * scale;
-    downloadCanvas.height = fabricCanvasRef.current.height * scale;
+    downloadCanvas.width = originalWidth;
+    downloadCanvas.height = originalHeight;
     
-    downloadCtx.scale(scale, scale);
+    // 스케일 계산 (현재 캔버스 → 원본 크기)
+    const scaleX = originalWidth / fabricCanvasRef.current.width;
+    const scaleY = originalHeight / fabricCanvasRef.current.height;
+    
+    downloadCtx.scale(scaleX, scaleY);
     downloadCtx.drawImage(fabricCanvasRef.current.lowerCanvasEl, 0, 0);
     
     const dataUrl = downloadCanvas.toDataURL('image/png', 1.0);
